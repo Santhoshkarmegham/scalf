@@ -1,0 +1,126 @@
+# test — Test Framework
+
+A generated **bdd** framework for **ui-api** automation. It uses strict TypeScript, Playwright-native UI/API tooling, environment-aware test data, an application façade, reusable fixtures, and optional Allure/CI integration.
+
+## Features
+
+- Page Objects and API service/client layers
+- Typed fixtures, request builders, responses, and validators
+- Central `config/run.config.json` for environment, timeouts, headless mode, retries, workers, and parallel execution
+- Automatically selected smoke/UAT JSON test data
+- Cross-platform scripts, ESLint, Prettier, and strict TypeScript
+- Secrets loaded from environment variables—never test-data JSON
+
+## Requirements
+
+Node.js 22 or newer. Install Playwright's browser once with `npx playwright install`. Allure Commandline 2 report generation also requires a Java runtime (Java 8 or newer; a current LTS such as Java 17 or 21 is recommended).
+
+## Installation
+
+```bash
+npm install
+npx playwright install
+```
+
+## Create a Framework
+
+This directory was produced by **Test Framework Scaffolder** (`test-framework-scaffolder`). Re-run the generator in a different parent directory to create another framework.
+
+## BDD Framework
+
+BDD projects keep Gherkin in `features/`, bindings in `steps/`, and use `playwright-bdd`. Run `npm run bddgen` explicitly when inspecting generated specs; `npm test` runs it automatically.
+
+## Non-BDD Framework
+
+Non-BDD projects use standard Playwright specs under `tests/ui` and/or `tests/api`.
+
+## UI Automation
+
+Page Objects live in `pages/`. `BasePage` owns common browser operations and concrete pages contain locators and business actions. Assertions remain in tests or steps.
+
+## API Automation
+
+Tests call `UserService`; services build requests, `ApiClient` executes them, and `ApiResponseValidator` verifies typed `ActualResponse<T>` values. `RequestBuilder` supports all common HTTP verbs, headers, bearer tokens, query parameters, JSON, and form bodies.
+
+## Project Structure
+
+```text
+config/        environment and framework configuration
+fixtures/      typed Playwright fixtures
+test-data/     environment-specific non-secret data
+utils/         active-environment and test-data loading
+pages/         UI Page Objects (when selected)
+api/           API client/service architecture (when selected)
+features/steps BDD scenarios and bindings (BDD)
+tests/         Playwright specs (Non-BDD)
+```
+
+## Environment Configuration
+
+Edit `config/run.config.json` to choose the default environment and execution settings, then use plain `npm test`. Optional overrides include `npm test smoke`, `npm test uat`, `npm run test:smoke`, `npm run test:uat`, `npm run test -- --env=smoke`, or `TEST_ENV=uat npm test`. Environment aliases are removed before Playwright receives its test filters, preventing the “No tests found” error. Unknown environments produce a list of valid values.
+
+## Test Data Management
+
+`getTestData<T>()` automatically loads `test-data/<active-environment>.json`; callers never pass an environment. To add any environment—such as `crm`, `payments`, or `smokea`—create `test-data/crm.json` and set `"environment": "crm"` only in `config/run.config.json`. The JSON data file does not need an environment property and no source-code change is required. For named collections, use `getKeyedTestData<T>('Appointment')`, which returns `Record<string, T>`.
+
+## Running Tests
+
+```bash
+npm test                              # entire suite
+npm test login.feature                # one BDD feature
+npm test login.spec.ts                # one Non-BDD spec
+npm test -- --tag @smoke              # one tag
+npm test -- --tag "@smoke and not @slow" # BDD tag expression
+npm run test:smoke
+npm run test:uat
+npm run test:ui
+npm run test:api
+npm run typecheck
+npm run lint
+```
+
+BDD tag filters are applied during feature generation, so only matching scenarios become runnable tests. Non-BDD tag filters map to Playwright `--grep`; annotate tests with `{ tag: '@name' }`. A filename is passed through as a Playwright filter and is never mistaken for an environment unless a matching `test-data/<name>.json` exists.
+
+## Allure Reporting
+
+When enabled, tests write metadata and results to `allure-results/`. `npm run allure` creates `allure-report/`; `npm run allure:open` serves it. `npm run allure:report` uses Allure 2's supported `--single-file` mode and writes the portable `reports/allure-report.html`.
+
+## GitHub Actions
+
+The optional workflow supports manual environment selection, runs tests, generates reports with `if: always()`, and uploads available artifacts. The commented cron example uses UTC.
+
+## Secrets
+
+Copy `.env.example` to `.env` locally. Keep usernames, passwords, tokens, and OAuth credentials out of JSON and source control. Configure the matching GitHub repository secrets for CI. Authorization headers are not logged.
+
+## Adding Page Objects
+
+Extend `BasePage`, use role/label/test-id locators, and expose business actions. Page construction belongs in the application fixture/façade so tests and BDD steps only call `app.<page>.<action>()`.
+
+## Adding API Services
+
+Create typed models, build requests with `RequestBuilder`, execute via `ApiClient`, and expose the service through the API fixture.
+
+## Adding Test Data
+
+Add the same schema to every selected environment folder, then load it through a typed interface. Put secret values in environment variables instead.
+
+## Architecture
+
+BDD: `Feature → Thin Step → App Fixture → Page Object/API Service → Playwright → Validator → Allure`
+TDD/Non-BDD: `Thin Test → App Fixture → Page Object/API Service → Playwright → Validator → Allure`
+
+## Troubleshooting
+
+- Browser missing: run `npx playwright install`.
+- Unknown environment: choose one listed in the error.
+- No Allure results: run tests first. If report generation says no Java runtime is available, install a current Java LTS and retry.
+- CI failure: download the Playwright/Allure artifacts and inspect traces and HTML output. Open a retained trace with `npx playwright show-trace path/to/trace.zip`; it includes actions, DOM snapshots, console messages, and network requests.
+
+## Contributing
+
+Run `npm run typecheck`, `npm run lint`, and `npm test` before opening a pull request. Keep additions typed and cross-platform.
+
+## License
+
+MIT

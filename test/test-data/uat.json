@@ -1,0 +1,9 @@
+{
+  "apiExpectedStatus": 200,
+  "baseUrl": "https://www.saucedemo.com",
+  "apiBaseUrl": "https://jsonplaceholder.typicode.com",
+  "validUser": { "username": "standard_user", "password": "secret_sauce" },
+  "Appointment": {
+    "GP": { "product-category": "GP", "product-identifier": "001", "procedure-identifier": "CONSULTATION" }
+  }
+}
